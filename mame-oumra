@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur de Financement Familial</title>
+    <style>
+        :root {
+            --primary-color: #3a5a78;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --border-color: #dee2e6;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: var(--dark-color);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1, h2, h3 {
+            color: var(--primary-color);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+        
+        .form-section, .results-section {
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #2c4a6c;
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        
+        .person-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        
+        .person-row > div {
+            flex: 1;
+        }
+        
+        .person-row > button {
+            flex: 0 0 auto;
+        }
+        
+        .results-container {
+            margin-top: 30px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+        
+        th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        
+        .total-row {
+            font-weight: bold;
+            background-color: #e9ecef !important;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            margin-right: 5px;
+            border-radius: 5px 5px 0 0;
+        }
+        
+        .tab.active {
+            background-color: white;
+            border-color: var(--border-color);
+            border-bottom: 1px solid white;
+            margin-bottom: -1px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @media print {
+            .form-section, .tabs {
+                display: none;
+            }
+            
+            .tab-content {
+                display: block;
+            }
+            
+            .container {
+                box-shadow: none;
+            }
+            
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simulateur de Financement Familial</h1>
+        
+        <div class="form-section">
+            <div class="form-group">
+                <label for="totalAmount">Montant total à financer (FCFA)</label>
+                <input type="number" id="totalAmount" value="1500000" min="1000" step="1000">
+            </div>
+            
+            <div class="form-group">
+                <label for="targetDate">Date limite</label>
+                <input type="date" id="targetDate">
+            </div>
+            
+            <div class="form-group">
+                <label>Participants</label>
+                <div id="peopleContainer">
+                    <!-- Les personnes seront ajoutées ici dynamiquement -->
+                </div>
+                <button class="btn btn-secondary" id="addPerson">Ajouter une personne</button>
+            </div>
+            
+            <div class="form-group" style="margin-top: 20px;">
+                <button class="btn btn-success" id="generateTables">Générer les tableaux</button>
+            </div>
+        </div>
+        
+        <div id="errorContainer" class="alert alert-danger hidden"></div>
+        
+        <div class="results-section hidden" id="resultsSection">
+            <h2>Résultats de la simulation</h2>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="tab1">Scénario 1: Khadim</div>
+                <div class="tab" data-tab="tab2">Scénario 2: Tous ensemble</div>
+                <button class="btn btn-secondary btn-sm no-print" style="margin-left: auto;" onclick="window.print()">Imprimer</button>
+            </div>
+            
+            <div class="tab-content active" id="tab1">
+                <h3>Scénario 1: Financement par la personne principale</h3>
+                <div id="table1Container"></div>
+            </div>
+            
+            <div class="tab-content" id="tab2">
+                <h3>Scénario 2: Financement par tous les participants</h3>
+                <div id="table2Container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Définition des pays et des devises associées
+        const countries = {
+            "SN": { name: "Sénégal", currency: "FCFA", rate: 1 },
+            "CA": { name: "Canada", currency: "CAD", rate: 440 },
+            "UK": { name: "Grande-Bretagne", currency: "GBP", rate: 760 },
+            "DE": { name: "Allemagne", currency: "EUR", rate: 655 }
+        };
+        
+        // Initialisation des variables globales
+        let people = [];
+        let monthsCount = 0;
+        
+        // Fonction pour initialiser l'application
+        function init() {
+            // Ajouter la première personne (principale)
+            addPerson(true);
+            
+            // Configurer la date par défaut (aujourd'hui + 6 mois)
+            const defaultDate = new Date();
+            defaultDate.setMonth(defaultDate.getMonth() + 6);
+            document.getElementById('targetDate').valueAsDate = defaultDate;
+            
+            // Ajouter les écouteurs d'événements
+            document.getElementById('addPerson').addEventListener('click', () => addPerson());
+            document.getElementById('generateTables').addEventListener('click', generateTables);
+            
+            // Configurer les onglets
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Désactiver tous les onglets
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Activer l'onglet cliqué
+                    tab.classList.add('active');
+                    const tabId = tab.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        }
+        
+        // Fonction pour ajouter une personne
+        function addPerson(isPrimary = false) {
+            const peopleContainer = document.getElementById('peopleContainer');
+            const personId = Date.now(); // Identifiant unique
+            
+            const personRow = document.createElement('div');
+            personRow.className = 'person-row';
+            personRow.setAttribute('data-id', personId);
+            
+            let personHTML = `
+                <div>
+                    <input type="text" placeholder="Nom" class="person-name" value="${isPrimary ? 'Khadim' : ''}">
+                </div>
+                <div>
+                    <select class="person-country" onchange="updatePowerValue(this)">
+            `;
+            
+            // Ajouter les options de pays
+            for (const [code, country] of Object.entries(countries)) {
+                const selected = isPrimary && code === 'CA' ? 'selected' : '';
+                personHTML += `<option value="${code}" ${selected}>${country.name} (${country.currency})</option>`;
+            }
+            
+            personHTML += `
+                    </select>
+                </div>
+                <div>
+                    <input type="number" placeholder="Pouvoir financier" class="person-power" min="1" max="10" value="${isPrimary ? '10' : '5'}">
+                </div>
+            `;
+            
+            // Ajouter un bouton de suppression sauf pour la personne principale
+            if (!isPrimary) {
+                personHTML += `<button class="btn btn-danger btn-sm" onclick="removePerson(${personId})">X</button>`;
+            } else {
+                personHTML += `<button class="btn btn-secondary btn-sm" disabled style="visibility: hidden;">X</button>`;
+            }
+            
+            personRow.innerHTML = personHTML;
+            peopleContainer.appendChild(personRow);
+            
+            // Ajouter la personne à la liste
+            people.push({
+                id: personId,
+                name: isPrimary ? 'Vous' : '',
+                country: isPrimary ? 'CA' : 'SN',
+                power: isPrimary ? 10 : 5,
+                isPrimary
+            });
+        }
+        
+        // Fonction pour mettre à jour le pouvoir financier en fonction du pays
+        function updatePowerValue(selectElement) {
+            const personRow = selectElement.closest('.person-row');
+            const personId = parseInt(personRow.getAttribute('data-id'));
+            const countryCode = selectElement.value;
+            
+            // Mettre à jour l'objet personne
+            const personIndex = people.findIndex(p => p.id === personId);
+            if (personIndex !== -1) {
+                people[personIndex].country = countryCode;
+            }
+        }
+        
+        // Fonction pour supprimer une personne
+        function removePerson(personId) {
+            // Supprimer l'élément DOM
+            const personRow = document.querySelector(`.person-row[data-id="${personId}"]`);
+            if (personRow) {
+                personRow.remove();
+            }
+            
+            // Supprimer de la liste
+            people = people.filter(person => person.id !== personId);
+        }
+        
+        // Fonction pour valider les données
+        function validateData() {
+            const errorContainer = document.getElementById('errorContainer');
+            errorContainer.innerHTML = '';
+            errorContainer.classList.add('hidden');
+            
+            // Valider le montant
+            const totalAmount = parseFloat(document.getElementById('totalAmount').value);
+            if (isNaN(totalAmount) || totalAmount <= 0) {
+                showError('Le montant total doit être un nombre positif.');
+                return false;
+            }
+            
+            // Valider la date
+            const targetDate = new Date(document.getElementById('targetDate').value);
+            const today = new Date();
+            if (isNaN(targetDate.getTime()) || targetDate <= today) {
+                showError('La date limite doit être dans le futur.');
+                return false;
+            }
+            
+            // Calculer le nombre de mois
+            const months = (targetDate.getFullYear() - today.getFullYear()) * 12 + 
+                           (targetDate.getMonth() - today.getMonth());
+            if (months < 1) {
+                showError('La période doit être d\'au moins 1 mois.');
+                return false;
+            }
+            
+            monthsCount = months;
+            
+            // Collecter les informations sur les personnes
+            people = [];
+            let foundPrimary = false;
+            
+            document.querySelectorAll('.person-row').forEach(row => {
+                const id = parseInt(row.getAttribute('data-id'));
+                const name = row.querySelector('.person-name').value.trim();
+                const country = row.querySelector('.person-country').value;
+                const power = parseInt(row.querySelector('.person-power').value);
+                
+                // Validation des champs
+                if (name === '') {
+                    showError('Tous les participants doivent avoir un nom.');
+                    return false;
+                }
+                
+                if (isNaN(power) || power < 1 || power > 10) {
+                    showError('Le pouvoir financier doit être entre 1 et 10.');
+                    return false;
+                }
+                
+                // Vérifier s'il s'agit de la personne principale (première personne)
+                const isPrimary = id === parseInt(document.querySelector('.person-row').getAttribute('data-id'));
+                if (isPrimary) foundPrimary = true;
+                
+                people.push({ id, name, country, power, isPrimary });
+            });
+            
+            if (!foundPrimary || people.length === 0) {
+                showError('Il doit y avoir au moins une personne.');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // Fonction pour afficher une erreur
+        function showError(message) {
+            const errorContainer = document.getElementById('errorContainer');
+            errorContainer.innerHTML = message;
+            errorContainer.classList.remove('hidden');
+        }
+        
+        // Fonction pour générer les tableaux
+        function generateTables() {
+            if (!validateData()) return;
+            
+            const totalAmount = parseFloat(document.getElementById('totalAmount').value);
+            const monthlyAmount = totalAmount / monthsCount;
+            
+            // Obtenir la personne principale (Canada)
+            const primaryPerson = people.find(p => p.isPrimary);
+            if (!primaryPerson) {
+                showError('Aucune personne principale trouvée.');
+                return;
+            }
+            
+            // Générer le premier tableau (personne principale seule)
+            generateTable1(primaryPerson, totalAmount, monthlyAmount);
+            
+            // Générer le deuxième tableau (tous ensemble)
+            generateTable2(people, totalAmount, monthlyAmount);
+            
+            // Afficher la section des résultats
+            document.getElementById('resultsSection').classList.remove('hidden');
+        }
+        
+        // Fonction pour générer le premier tableau (personne principale seule)
+        function generateTable1(person, totalAmount, monthlyAmount) {
+            const container = document.getElementById('table1Container');
+            const country = countries[person.country];
+            
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Mois</th>
+                            <th>Montant (FCFA)</th>
+                            <th>Équivalent (${country.currency})</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            const today = new Date();
+            let totalFCFA = 0;
+            let totalCurrency = 0;
+            
+            for (let i = 0; i < monthsCount; i++) {
+                const monthDate = new Date(today);
+                monthDate.setMonth(today.getMonth() + i);
+                const monthName = monthDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+                
+                const amountFCFA = Math.round(monthlyAmount);
+                const amountCurrency = Math.round((amountFCFA / country.rate) * 100) / 100;
+                
+                totalFCFA += amountFCFA;
+                totalCurrency += amountCurrency;
+                
+                html += `
+                    <tr>
+                        <td>${monthName}</td>
+                        <td>${amountFCFA.toLocaleString('fr-FR')} FCFA</td>
+                        <td>${amountCurrency.toLocaleString('fr-FR')} ${country.currency}</td>
+                    </tr>
+                `;
+            }
+            
+            html += `
+                    <tr class="total-row">
+                        <td>Total</td>
+                        <td>${totalFCFA.toLocaleString('fr-FR')} FCFA</td>
+                        <td>${totalCurrency.toLocaleString('fr-FR')} ${country.currency}</td>
+                    </tr>
+                </tbody>
+            </table>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        // Fonction pour générer le deuxième tableau (tous ensemble)
+        function generateTable2(allPeople, totalAmount, monthlyAmount) {
+            const container = document.getElementById('table2Container');
+            
+            // Calculer le pouvoir financier total
+            const totalPower = allPeople.reduce((sum, person) => sum + person.power, 0);
+            
+            // Calculer la contribution de chaque personne
+            const contributions = allPeople.map(person => {
+                const ratio = person.power / totalPower;
+                const country = countries[person.country];
+                return {
+                    ...person,
+                    ratio,
+                    monthlyFCFA: Math.round(monthlyAmount * ratio),
+                    monthlyCurrency: Math.round((monthlyAmount * ratio / country.rate) * 100) / 100,
+                    currency: country.currency
+                };
+            });
+            
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Mois</th>
+            `;
+            
+            // Ajouter les en-têtes pour chaque personne
+            contributions.forEach(person => {
+                html += `<th>${person.name} (${person.currency})</th>`;
+            });
+            
+            html += `
+                            <th>Total (FCFA)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            const today = new Date();
+            const totals = contributions.map(() => 0);
+            let grandTotal = 0;
+            
+            for (let i = 0; i < monthsCount; i++) {
+                const monthDate = new Date(today);
+                monthDate.setMonth(today.getMonth() + i);
+                const monthName = monthDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+                
+                html += `<tr><td>${monthName}</td>`;
+                
+                let monthlyTotal = 0;
+                
+                contributions.forEach((person, index) => {
+                    html += `<td>${person.monthlyCurrency.toLocaleString('fr-FR')} ${person.currency}</td>`;
+                    totals[index] += person.monthlyCurrency;
+                    monthlyTotal += person.monthlyFCFA;
+                });
+                
+                html += `<td>${monthlyTotal.toLocaleString('fr-FR')} FCFA</td></tr>`;
+                grandTotal += monthlyTotal;
+            }
+            
+            // Ajouter la ligne des totaux
+            html += `<tr class="total-row"><td>Total</td>`;
+            
+            contributions.forEach((person, index) => {
+                html += `<td>${totals[index].toLocaleString('fr-FR')} ${person.currency}</td>`;
+            });
+            
+            html += `<td>${grandTotal.toLocaleString('fr-FR')} FCFA</td></tr>`;
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        // Initialiser l'application au chargement
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
